@@ -136,8 +136,13 @@ class LogStash::Inputs::Gelf < LogStash::Inputs::Base
   # @param host [String] source host of GELF data
   # @return [LogStash::Event] new event with parsed json gelf, assigned source host and coerced timestamp
   def self.new_event(json_gelf, host)
-    event = parse(json_gelf)
-    return if event.nil?
+    begin
+      event = parse(json_gelf)
+      return if event.nil?
+    rescue => ex
+      @logger.error("Could not create event, skipping", :exception => ex, :backtrace => ex.backtrace, :data => json_gelf, :host => host)
+      return
+    end
 
     event.set(SOURCE_HOST_FIELD, host)
 
